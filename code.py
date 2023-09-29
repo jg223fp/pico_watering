@@ -9,6 +9,7 @@ from adafruit_display_text import label
 from analogio import AnalogIn
 
 
+
 #Pinout
 led = digitalio.DigitalInOut(board.LED)
 led.direction = digitalio.Direction.OUTPUT
@@ -53,6 +54,16 @@ def display_moist_level():
     text_area.text = text
     display.refresh()
 
+def scroll_text(display, text_area, text):
+    text_area.text = text
+    text_area.x = display.width
+    text_area.y = 5
+    while text_area.x >= (-3 * len(text) - display.width - 5):
+        text_area.x -= 3
+        time.sleep(1 / 60)
+        display.refresh()
+
+
 #Setup
 displayio.release_displays()
 i2c = busio.I2C(scl=display_scl, sda=display_sda)
@@ -63,14 +74,53 @@ display.show(splash)
 
 current_moist_level = str(get_moist_level())
 text_area = label.Label(
-    terminalio.FONT, text=current_moist_level, color=0xFFFFFF, x=0, y=5
+    terminalio.FONT, text=current_moist_level, color=0xFFFFFF, x=0, y=5, scale=1
 )
 splash.append(text_area)
+
+#text_area1 = label.Label(
+#    terminalio.FONT, text=current_moist_level, color=0xFFFFFF, x=0, y=18
+#)
+#splash.append(text_area1)
+
 display.refresh()
 
+# Load the jokes from the text file
+jokes = []
+with open("jokes.txt", "r") as file:
+    jokes = file.read().splitlines()
 
-
+current_joke = 0
 #Main
 while True:
-    display_moist_level()
+   # display_moist_level()
+
+
+    joke = jokes[current_joke].split(",")
+    question = joke[0].strip()[1:].replace('"', '')
+    answer = joke[1].strip()[:-1].replace('"', '')
+       
+    display.show(splash)
+    
+    scroll_text(display, text_area, question)
     time.sleep(1)
+    scroll_text(display, text_area, answer)
+    time.sleep(1)
+    
+    text_area.x = 40
+    text_area.y = 8
+    text_area.scale = 2
+    for i in range(3):
+        text_area.text = "LOL!"
+        time.sleep(0.4)
+        text_area.text = ""
+        time.sleep(0.4)
+  
+    text_area.scale = 1   
+    
+    # Clear the display
+    display.show(None)
+    
+    # Move to the next joke
+    current_joke = (current_joke + 1) % len(jokes)
+    
