@@ -28,6 +28,8 @@ BORDER = 1
 #Moistlevels
 # high = 0 v
 # low = 3.3
+WATERING_LIMIT = 30
+
 
 #Functions
 
@@ -37,11 +39,6 @@ def get_moist_level():
     percentage = 100 - (voltage / 3.3) * 100   
     return round(percentage)
 
-def pump_water():
-    pump.value = True
-    time.sleep(2) 
-    pump.value = False
-
 def blink_led(duration):
     for i in range(duration):
         led.value = True
@@ -50,19 +47,57 @@ def blink_led(duration):
         time.sleep(0.5)
 
 def display_moist_level():
+    text_area_upper.x = 0
+    text_area_upper.y = 5
     text = "Moist level: " + str(get_moist_level()) + " %"
-    text_area.text = text
+    text_area_upper.text = text
+    text_area_lower.text = "Lower limit: " + str(WATERING_LIMIT) + " %"
     display.refresh()
 
-def scroll_text(display, text_area, text):
-    text_area.text = text
-    text_area.x = display.width
-    text_area.y = 5
-    while text_area.x >= (-3 * len(text) - display.width - 5):
-        text_area.x -= 3
+def scroll_text(display, text_area_upper, text):
+    text_area_upper.x = display.width
+    text_area_upper.y = 5
+    text_area_upper.text = text
+    while text_area_upper.x >= (-3.5 * len(text) - display.width - 5):
+        text_area_upper.x -= 3
         time.sleep(1 / 60)
         display.refresh()
 
+def present_joke():
+    global current_joke
+    
+    joke = jokes[current_joke].split(",")
+    question = joke[0].strip()[1:].replace('"', '')
+    answer = joke[1].strip()[:-1].replace('"', '')
+       
+    display.show(splash)
+    
+    scroll_text(display, text_area_upper, question)
+    time.sleep(1)
+    scroll_text(display, text_area_upper, answer)
+    
+    display.show(None)
+    
+    current_joke = (current_joke + 1) % len(jokes)
+    
+def flash_text(text):
+    display.show(splash)
+    text_area_upper.x = 35
+    text_area_upper.y = 12
+    text_area_upper.scale = 3
+    for i in range(3):
+        text_area_upper.text = text
+        time.sleep(0.3)
+        text_area_upper.text = ""
+        time.sleep(0.3)
+  
+    text_area_upper.scale = 1 
+    
+    display.show(None)
+
+def clear_text():
+    text_area_lower.text = ""
+    text_area_upper.text = ""
 
 #Setup
 displayio.release_displays()
@@ -73,17 +108,17 @@ splash = displayio.Group()
 display.show(splash)
 
 current_moist_level = str(get_moist_level())
-text_area = label.Label(
+text_area_upper = label.Label(
     terminalio.FONT, text=current_moist_level, color=0xFFFFFF, x=0, y=5, scale=1
 )
-splash.append(text_area)
+splash.append(text_area_upper)
 
-#text_area1 = label.Label(
-#    terminalio.FONT, text=current_moist_level, color=0xFFFFFF, x=0, y=18
-#)
-#splash.append(text_area1)
+text_area_lower = label.Label(
+    terminalio.FONT, text="", color=0xFFFFFF, x=0, y=18
+)
+splash.append(text_area_lower)
 
-display.refresh()
+#display.refresh()
 
 # Load the jokes from the text file
 jokes = []
@@ -93,34 +128,27 @@ with open("jokes.txt", "r") as file:
 current_joke = 0
 #Main
 while True:
-   # display_moist_level()
-
-
-    joke = jokes[current_joke].split(",")
-    question = joke[0].strip()[1:].replace('"', '')
-    answer = joke[1].strip()[:-1].replace('"', '')
-       
     display.show(splash)
-    
-    scroll_text(display, text_area, question)
-    time.sleep(1)
-    scroll_text(display, text_area, answer)
-    time.sleep(1)
-    
-    text_area.x = 40
-    text_area.y = 8
-    text_area.scale = 2
-    for i in range(3):
-        text_area.text = "LOL!"
-        time.sleep(0.4)
-        text_area.text = ""
-        time.sleep(0.4)
-  
-    text_area.scale = 1   
-    
-    # Clear the display
+    moist_level = 0
+    while moist_level < WATERING_LIMIT:
+        for i in range(5):
+            display_moist_level()
+            moist_level = get_moist_level()
+            if moist_level < WATERING_LIMIT:
+                pump.value = True
+                led.value = True
+                
+            else:
+                pump.value = False
+                led.value = False
+            time.sleep(1)
+            
+    clear_text()       
     display.show(None)
     
-    # Move to the next joke
-    current_joke = (current_joke + 1) % len(jokes)
+    present_joke()
+    flash_text("LOL!")
+    clear_text()
+    
+    
     
