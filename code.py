@@ -64,7 +64,7 @@ def scroll_text(display, text_area_upper, text):
 def present_joke():
     global current_joke
     
-    joke = jokes[current_joke].split(",")
+    joke = jokes[current_joke].split(";")
     question = joke[0].strip()[1:].replace('"', '')
     answer = joke[1].strip()[:-1].replace('"', '')
        
@@ -170,11 +170,9 @@ while True:
             display_moist_level(moist_level)          
             
             if moist_level < WATERING_LIMIT:
-                pump.value = True
-                led.value = True           
+                pump.value = True     
             else:
                 pump.value = False
-                led.value = False
             time.sleep(1)
             
     #clear_text()       
