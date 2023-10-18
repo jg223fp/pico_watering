@@ -62,6 +62,7 @@ def scroll_text(display, text_area_upper, text):
         text_area_upper.x -= 3
         time.sleep(1 / 60)
         display.refresh()
+        w.feed()
 
 def present_joke():
     global current_joke
@@ -166,8 +167,10 @@ with open("jokes.txt", "r") as file:
 
 current_joke = 0
 
+# Add watchdog to restart at crash
 w.mode = WatchDogMode.RESET
-w.timeout=7.5
+w.timeout = 8
+
 #Main
 while True:
     display.show(splash)
@@ -183,6 +186,7 @@ while True:
             else:
                 pump.value = False
             time.sleep(1)
+            w.feed()
             
     #clear_text()       
     #display.show(None)
@@ -190,9 +194,8 @@ while True:
     
     present_joke()
     flash_text("LOL!")
-    cool_effect(True)
-    
     w.feed()
+    cool_effect(True)
     
 
     
