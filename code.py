@@ -4,7 +4,8 @@ import displayio
 import terminalio
 import digitalio
 import time
-import microcontroller
+from microcontroller import watchdog as w
+from watchdog import WatchDogMode
 import adafruit_displayio_ssd1306
 from adafruit_display_text import label
 from analogio import AnalogIn
@@ -164,6 +165,9 @@ with open("jokes.txt", "r") as file:
     file.close()
 
 current_joke = 0
+
+w.mode = WatchDogMode.RESET
+w.timeout=7.5
 #Main
 while True:
     display.show(splash)
@@ -188,8 +192,9 @@ while True:
     flash_text("LOL!")
     cool_effect(True)
     
-    if current_joke > last_joke_row:
-       microcontroller.reset()
+    w.feed()
+    
+
     
     
     
