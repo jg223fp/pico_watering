@@ -4,6 +4,7 @@ import displayio
 import terminalio
 import digitalio
 import time
+import microcontroller
 import adafruit_displayio_ssd1306
 from adafruit_display_text import label
 from analogio import AnalogIn
@@ -65,8 +66,8 @@ def present_joke():
     global current_joke
     
     joke = jokes[current_joke].split(";")
-    question = joke[0].strip()[1:].replace('"', '')
-    answer = joke[1].strip()[:-1].replace('"', '')
+    question = joke[0].strip()[1:].replace('"', '').replace('\\','')
+    answer = joke[1].strip()[:-1].replace('"', '').replace('\\','')
        
     display.show(splash)
     
@@ -155,8 +156,12 @@ splash.append(text_area_lower)
 
 # Load the jokes from the text file
 jokes = []
+last_joke_row = 0
 with open("jokes.txt", "r") as file:
     jokes = file.read().splitlines()
+    for line in file:
+        last_joke_row += 1
+    file.close()
 
 current_joke = 0
 #Main
@@ -183,6 +188,8 @@ while True:
     flash_text("LOL!")
     cool_effect(True)
     
+    if current_joke > last_joke_row:
+       microcontroller.reset()
     
     
     
